@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: no-1-masale-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm run start:mailer
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: FROM_EMAIL
+        sync: false
+      - key: TO_EMAIL
+        sync: false
+      - key: ADMIN_REVIEW_TOKEN
+        sync: false
+      - key: REVIEW_ADMIN_EMAIL
+        sync: false
+      - key: REVIEW_ADMIN_BASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_REVIEW_BUCKET
+        value: review-images
