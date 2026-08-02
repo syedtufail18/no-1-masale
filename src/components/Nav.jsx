@@ -3,10 +3,11 @@ import React, { useEffect, useState } from 'react'
 const ITEMS = [
   { id: 'home', label: 'Home' },
   { id: 'explore', label: 'Masalas' },
+  { id: 'packaging', label: 'Packaging' },
   { id: 'enquiry', label: 'Enquiry' },
 ]
 
-export default function Nav({ show, mobileOpen, setMobileOpen }) {
+export default function Nav({ scrolled = false, mobileOpen, setMobileOpen }) {
   const [active, setActive] = useState('home')
 
   useEffect(() => {
@@ -27,13 +28,9 @@ export default function Nav({ show, mobileOpen, setMobileOpen }) {
   }, [])
 
   return (
-    <nav
-      className={`fixed inset-x-0 top-0 z-40 transition-all duration-500 ${
-        show ? 'translate-y-0 opacity-100' : '-translate-y-24 opacity-0'
-      }`}
-    >
+    <nav className="fixed inset-x-0 top-0 z-40 transition-all duration-500">
       <div className="mx-auto max-w-7xl px-4 pt-3 sm:px-6">
-        <div className="rounded-[1.75rem] border border-white/60 bg-white/75 px-4 py-3 shadow-[0_20px_60px_rgba(91,33,6,0.12)] backdrop-blur-2xl">
+        <div className={`rounded-[1.75rem] border border-white/60 bg-white/75 px-4 shadow-[0_20px_60px_rgba(91,33,6,0.12)] backdrop-blur-2xl transition-all duration-500 ${scrolled ? 'py-2' : 'py-3'}`}>
           <div className="flex items-center justify-between gap-4">
             <a href="#home" className="flex items-center gap-3">
               <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 text-lg font-black text-white shadow-lg shadow-amber-500/25">

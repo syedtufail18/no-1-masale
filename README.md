@@ -1,18 +1,32 @@
-# Scroll Zoom Demo (React + Tailwind)
+# No. 1 Masale
 
-This is a minimal demo showing how to animate a hero image on scroll using Tailwind and React.
+React and Vite website for No. 1 Masale, including the scroll-driven masala box,
+packaging collection, enquiry flow, WhatsApp actions, and moderated customer reviews.
 
-How it works
-- The `Hero` component uses `IntersectionObserver` to detect when the image container is at least 50% visible.
-- When visible, we apply `scale-100`; when out of view we apply `scale-110`, creating a zoom-in/zoom-out effect.
-
-Run locally (PowerShell on Windows):
+## Run locally
 
 ```powershell
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173 in your browser.
+Open `http://localhost:5173`.
 
-Adjust the behavior by changing the `threshold` or the Tailwind `scale-` classes and `duration-` utilities.
+The email and hosted-review features use the separate Express service:
+
+```powershell
+npm run start:mailer
+```
+
+## GitHub Pages
+
+The `main` branch deploys the frontend through `.github/workflows/deploy-pages.yml`.
+The public site is available at:
+
+`https://syedtufail18.github.io/no-1-masale/`
+
+GitHub Pages hosts the frontend only. Set the repository variables
+`VITE_API_BASE_URL`, `VITE_BUSINESS_EMAIL`, `VITE_BUSINESS_PHONE`, and
+`VITE_WHATSAPP_NUMBER` in **Settings > Secrets and variables > Actions > Variables**.
+`VITE_API_BASE_URL` must point to a separately hosted Express backend for enquiry,
+review submission, image storage, and moderation email actions to work in production.

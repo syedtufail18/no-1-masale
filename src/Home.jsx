@@ -2,38 +2,45 @@ import React, { useEffect, useMemo, useState } from 'react'
 import Nav from './components/Nav'
 import MasalaExperienceSection from './components/MasalaExperienceSection'
 import PackagingCollection from './components/PackagingCollection'
-import WhyChooseUs from './components/WhyChooseUs'
 import CustomerReviews from './components/CustomerReviews'
+import FloatingWhatsApp from './components/FloatingWhatsApp'
 import { PRODUCTS, getProductById } from './data/products.mjs'
 import { CONTACT } from './config/contact.mjs'
 
+const ENQUIRY_QUANTITIES = ['100g', '200g', '500g', '1kg', 'Bulk']
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3001'
+
 export default function Home() {
-  const [showNav, setShowNav] = useState(true)
+  const [isScrolled, setIsScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [navHeight, setNavHeight] = useState(0)
   const [selectedId, setSelectedId] = useState(PRODUCTS[0].id)
+  const [selectedQuantity, setSelectedQuantity] = useState('')
+  const [includeProductDetails, setIncludeProductDetails] = useState(false)
+  const [enquiryProductId, setEnquiryProductId] = useState(PRODUCTS[0].id)
+  const [enquiryQuantity, setEnquiryQuantity] = useState(ENQUIRY_QUANTITIES[0])
   const [enquiry, setEnquiry] = useState({ name: '', email: '', phone: '', message: '' })
   const [sending, setSending] = useState(false)
+  const [submission, setSubmission] = useState({ status: 'idle', message: '', mailto: '' })
 
   const selectedProduct = useMemo(
     () => getProductById(selectedId) || PRODUCTS[0],
     [selectedId]
   )
 
+  const enquiryProduct = useMemo(
+    () => getProductById(enquiryProductId) || PRODUCTS[0],
+    [enquiryProductId]
+  )
+
   useEffect(() => {
     function onScroll() {
-      setShowNav(window.scrollY < 50)
-    }
-
-    function onMove(e) {
-      if (e.clientY < 80) setShowNav(true)
+      setIsScrolled(window.scrollY > 50)
     }
 
     window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('mousemove', onMove)
     return () => {
       window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('mousemove', onMove)
     }
   }, [])
 
@@ -50,30 +57,52 @@ export default function Home() {
   function handleEnquiryChange(e) {
     const { name, value } = e.target
     setEnquiry((s) => ({ ...s, [name]: value }))
+    if (submission.status !== 'idle') setSubmission({ status: 'idle', message: '', mailto: '' })
+  }
+
+  function handleProductChange(productId, quantity = '') {
+    setSelectedId(productId)
+    setSelectedQuantity(quantity)
+  }
+
+  function createMailtoUrl() {
+    const productDetails = includeProductDetails
+      ? `\nProduct ID: ${enquiryProduct.id}\nProduct: ${enquiryProduct.name}\nQuantity: ${enquiryQuantity}`
+      : ''
+    const subject = encodeURIComponent(`Enquiry from ${enquiry.name || 'Website visitor'}`)
+    const body = encodeURIComponent(
+      `Name: ${enquiry.name}\nEmail: ${enquiry.email}\nPhone: ${enquiry.phone}${productDetails}\n\nMessage:\n${enquiry.message}`
+    )
+    return `mailto:${CONTACT.businessEmail}?subject=${subject}&body=${body}`
   }
 
   async function handleEnquirySubmit(e) {
     e.preventDefault()
     if (!enquiry.email || !enquiry.message) {
-      alert('Please provide your email and a message.')
+      setSubmission({ status: 'error', message: 'Please provide your email and a message.', mailto: '' })
       return
     }
 
     setSending(true)
+    setSubmission({ status: 'sending', message: 'Sending your enquiry...', mailto: '' })
     try {
-      const res = await fetch('http://localhost:3001/send', {
+      const emailPayload = { ...enquiry }
+      if (includeProductDetails) {
+        emailPayload.productId = enquiryProduct.id
+        emailPayload.productName = enquiryProduct.name
+        emailPayload.quantity = enquiryQuantity
+      }
+
+      const res = await fetch(`${API_BASE}/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...enquiry,
-          productId: selectedProduct.id,
-          productName: selectedProduct.name,
-        }),
+        body: JSON.stringify(emailPayload),
       })
 
       if (res.ok) {
-        alert('Enquiry sent! Thank you.')
+        setSubmission({ status: 'success', message: 'Enquiry sent. Thank you, we will get back to you shortly.', mailto: '' })
         setEnquiry({ name: '', email: '', phone: '', message: '' })
+        setSelectedQuantity('')
         return
       }
 
@@ -86,21 +115,22 @@ export default function Home() {
     }
 
     if (!CONTACT.businessEmail) {
-      alert('Enquiry could not be sent. Please try again later.')
+      setSubmission({ status: 'error', message: 'Enquiry could not be sent because the business email is not configured.', mailto: '' })
       return
     }
 
-    const subject = encodeURIComponent(`Enquiry from ${enquiry.name || 'Website visitor'}`)
-    const body = encodeURIComponent(
-      `Name: ${enquiry.name}\nEmail: ${enquiry.email}\nPhone: ${enquiry.phone}\nProduct: ${selectedProduct.name}\n\nMessage:\n${enquiry.message}`
-    )
-    window.location.href = `mailto:${CONTACT.businessEmail}?subject=${subject}&body=${body}`
+    setSubmission({
+      status: 'fallback',
+      message: 'The mail server is unavailable. You can still send this enquiry from your email app.',
+      mailto: createMailtoUrl(),
+    })
   }
 
   return (
     <div className="min-h-screen relative bg-[radial-gradient(circle_at_top,#fff8ed_0%,#fff5e7_32%,#f7f1ea_70%,#f4efe7_100%)]">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.8),rgba(255,245,225,0.2),rgba(255,255,255,0.55))] animate-sheen" />
-      <Nav show={showNav} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
+      <Nav scrolled={isScrolled} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
+      <FloatingWhatsApp product={selectedProduct} quantity={selectedQuantity} />
 
       <main className="relative z-10">
         <section id="home" className="relative flex min-h-screen items-center overflow-hidden pt-24">
@@ -108,6 +138,8 @@ export default function Home() {
             src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExY255emJpZ2JoazFzZTFwNTBoZWVldHdwc2NqcXRiMzFvejcwaHQ2MiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Z1wEt2GB22CbiRrppJ/giphy.gif"
             alt="Spice animation background"
             className="absolute inset-x-0 w-full object-cover opacity-80"
+            fetchPriority="high"
+            decoding="async"
             style={{ top: `${navHeight}px`, height: `calc(100% - ${navHeight}px)` }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/20 to-transparent" />
@@ -149,10 +181,9 @@ export default function Home() {
 
         <section aria-hidden className="h-12 md:h-20" />
 
-        <MasalaExperienceSection products={PRODUCTS} onProductChange={setSelectedId} />
+        <MasalaExperienceSection products={PRODUCTS} onProductChange={handleProductChange} />
 
-        <PackagingCollection />
-        <WhyChooseUs />
+        <PackagingCollection products={PRODUCTS} onProductChange={handleProductChange} />
         <CustomerReviews />
 
         <section aria-hidden className="h-16 md:h-24" />
@@ -205,6 +236,42 @@ export default function Home() {
                   />
                 </div>
                 <div className="sm:col-span-2">
+                  <label className="enquiry-product-toggle">
+                    <input
+                      type="checkbox"
+                      checked={includeProductDetails}
+                      onChange={(event) => setIncludeProductDetails(event.target.checked)}
+                    />
+                    <span>Include product details in this enquiry</span>
+                  </label>
+                </div>
+                {includeProductDetails && (
+                  <div className="enquiry-product-fields sm:col-span-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-stone-700" htmlFor="enquiry-product">Product</label>
+                      <select
+                        id="enquiry-product"
+                        value={enquiryProductId}
+                        onChange={(event) => setEnquiryProductId(event.target.value)}
+                        className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-amber-400"
+                      >
+                        {PRODUCTS.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-stone-700" htmlFor="enquiry-quantity">Quantity</label>
+                      <select
+                        id="enquiry-quantity"
+                        value={enquiryQuantity}
+                        onChange={(event) => setEnquiryQuantity(event.target.value)}
+                        className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-stone-900 outline-none transition focus:border-amber-400"
+                      >
+                        {ENQUIRY_QUANTITIES.map((quantity) => <option key={quantity} value={quantity}>{quantity}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                )}
+                <div className="sm:col-span-2">
                   <label className="mb-2 block text-sm font-medium text-stone-700">Message</label>
                   <textarea
                     name="message"
@@ -225,6 +292,12 @@ export default function Home() {
                   </button>
                   <p className="text-sm text-stone-500 text-right leading-6">We&apos;ll respond within 1-2 business days.</p>
                 </div>
+                {submission.status !== 'idle' && (
+                  <div className={`enquiry-status enquiry-status--${submission.status}`} role={submission.status === 'error' ? 'alert' : 'status'} aria-live="polite">
+                    <span>{submission.message}</span>
+                    {submission.mailto && <a href={submission.mailto}>Open email app</a>}
+                  </div>
+                )}
               </div>
             </div>
           </form>

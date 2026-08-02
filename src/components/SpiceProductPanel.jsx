@@ -1,5 +1,4 @@
 import React from 'react'
-import ProductActionButtons from './ProductActionButtons'
 import spiceBowl from '../assets/spice bowl.png'
 import cuminSeed from '../assets/products/cumin-seed.png'
 import corianderSeed from '../assets/products/coriander-seed.png'
@@ -84,7 +83,6 @@ export default function SpiceProductPanel({ product, panelProgress = 1, staticLa
         </div>
       </dl>
 
-      <ProductActionButtons product={product} />
     </article>
   )
 }
