@@ -34,6 +34,7 @@ export default function MasalaBoxScene({
         className="masala-box"
         style={{
           '--box-rotation': `${rotation * 1.35}deg`,
+          '--label-rotation': `${rotation * -1.35}deg`,
           transform: `perspective(1200px) rotateX(${focusProgress * 7}deg) rotateZ(${rotation * 1.35}deg) scale(${1 + focusProgress * 0.08})`,
         }}
       >
