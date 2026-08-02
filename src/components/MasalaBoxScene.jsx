@@ -30,7 +30,13 @@ export default function MasalaBoxScene({
   return (
     <div className="masala-box-frame" aria-label="Rotating masala box" style={{ '--scene-focus': focusProgress }}>
       <div className="masala-box-shadow" aria-hidden="true" />
-      <div className="masala-box" style={{ transform: `perspective(1200px) rotateX(${focusProgress * 7}deg) rotateZ(${rotation * 1.35}deg) scale(${1 + focusProgress * 0.08})` }}>
+      <div
+        className="masala-box"
+        style={{
+          '--box-rotation': `${rotation * 1.35}deg`,
+          transform: `perspective(1200px) rotateX(${focusProgress * 7}deg) rotateZ(${rotation * 1.35}deg) scale(${1 + focusProgress * 0.08})`,
+        }}
+      >
         <img className="masala-box-image" src={spiceBowl} alt="Circular box filled with Indian spices" decoding="async" fetchPriority="high" />
         <div className="masala-box-tint" aria-hidden="true" />
         {products.map((product, index) => {
