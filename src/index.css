@@ -454,8 +454,8 @@ body {
   .masala-mobile-heading h2 { margin: .45rem 0 0; color: #1c1917; font-size: clamp(1.85rem, 5.5vw, 2.7rem); font-weight: 650; line-height: 1.04; }
   .masala-mobile-heading > p:last-child { max-width: 30rem; margin: .65rem 0 0; color: #78716c; font-size: .9rem; line-height: 1.45; }
   .masala-mobile-scene { display: grid; align-self: center; width: 100%; max-width: none; margin: 0; padding-bottom: 1.35rem; place-items: center; }
-  .masala-mobile-scene .masala-box-frame { width: min(22rem, 82vw, 40svh); margin: 0 auto; }
-  .masala-mobile-scene .masala-box-caption { bottom: -1.55rem; font-size: .68rem; letter-spacing: .12em; }
+  .masala-mobile-scene .masala-box-frame { width: min(22rem, 82vw, 36svh); margin: 0 auto; }
+  .masala-mobile-scene .masala-box-caption { display: none; }
   .masala-mobile-scene .masala-compartment { width: clamp(3rem, 13vw, 4.35rem); border-width: 3px; }
   .masala-mobile-scene .masala-compartment.is-active { box-shadow: 0 18px 34px rgba(31,20,12,.44), 0 0 0 9px rgba(255,255,255,.22); }
   .masala-mobile-scene .masala-compartment-label { top: calc(100% + .55rem); padding: .32rem .5rem; font-size: .62rem; }
