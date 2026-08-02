@@ -175,7 +175,7 @@ export default function MasalaExperienceSection({ products, onProductChange }) {
   }, [products.length, reducedMotion])
 
   useEffect(() => {
-    if (reducedMotion) return undefined
+    if (reducedMotion && window.innerWidth >= 1024) return undefined
 
     const section = sectionRef.current
     if (!section) return undefined
@@ -288,7 +288,7 @@ export default function MasalaExperienceSection({ products, onProductChange }) {
     }
   }, [activeProduct.id, reducedMotion, rotation])
 
-  if (reducedMotion) {
+  if (reducedMotion && window.innerWidth >= 1024) {
     return (
       <section id="explore" className="masala-experience masala-reduced-motion" data-testid="masala-experience">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
