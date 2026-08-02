@@ -19,7 +19,14 @@ const ACCENTS = {
   mustard: '#d7a72a',
 }
 
-export default function MasalaBoxScene({ products, activeIndex, focusProgress, rotation }) {
+export default function MasalaBoxScene({
+  products,
+  activeIndex,
+  focusProgress,
+  rotation,
+  interactive = false,
+  onProductSelect,
+}) {
   return (
     <div className="masala-box-frame" aria-label="Rotating masala box" style={{ '--scene-focus': focusProgress }}>
       <div className="masala-box-shadow" aria-hidden="true" />
@@ -32,10 +39,20 @@ export default function MasalaBoxScene({ products, activeIndex, focusProgress, r
           const lift = active ? focusProgress * -68 : 0
           const scale = active ? 1 + focusProgress * 1.02 : 0.76
 
+          const compartmentProps = interactive
+            ? {
+                'aria-label': `Select ${product.name}`,
+                'aria-pressed': active,
+                onClick: () => onProductSelect?.(index),
+                type: 'button',
+              }
+            : { 'aria-hidden': true }
+          const Compartment = interactive ? 'button' : 'div'
+
           return (
-            <div
+            <Compartment
               key={product.id}
-              className={`masala-compartment ${active ? 'is-active' : ''}`}
+              className={`masala-compartment ${active ? 'is-active' : ''} ${interactive ? 'is-interactive' : ''}`}
               data-product-id={product.id}
               style={{
                 '--compartment-accent': ACCENTS[product.accent],
@@ -44,12 +61,12 @@ export default function MasalaBoxScene({ products, activeIndex, focusProgress, r
                 top,
                 transform: `translate(-50%, -50%) translateY(${lift}px) scale(${scale})`,
               }}
-              aria-hidden="true"
+              {...compartmentProps}
             >
               <span className="masala-compartment-core"><i /><i /><i /></span>
               <span className="masala-compartment-glow" />
               {active && <span className="masala-compartment-label">{product.name}</span>}
-            </div>
+            </Compartment>
           )
         })}
       </div>

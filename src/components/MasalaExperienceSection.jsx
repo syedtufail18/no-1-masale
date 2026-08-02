@@ -3,6 +3,15 @@ import MasalaBoxScene from './MasalaBoxScene'
 import SpiceProductPanel from './SpiceProductPanel'
 import { getMasalaSequenceState } from '../utils/masalaSequence.mjs'
 
+const MOBILE_ACCENTS = {
+  amber: '#f59e0b',
+  coriander: '#628e4d',
+  cumin: '#a76434',
+  chilli: '#dc4a2b',
+  garam: '#74472d',
+  mustard: '#c99519',
+}
+
 function usePrefersReducedMotion() {
   const [reducedMotion, setReducedMotion] = useState(false)
 
@@ -96,6 +105,47 @@ function ResponsiveMasalaBox({ products, activeIndex = 0, focusProgress = 0, rot
   )
 }
 
+function MobileMasalaStage({ activeProduct, products, sequence, onProductSelect, rotation }) {
+  return (
+    <div className="masala-mobile-track lg:hidden">
+      <div className="masala-mobile-stage">
+        <div className="masala-mobile-stage-inner">
+          <header className="masala-mobile-heading">
+            <p className="masala-kicker">Touch and scroll collection</p>
+            <h2>The masala box, in your hands.</h2>
+            <p>Scroll to rotate it, or tap a compartment to jump straight to a spice.</p>
+          </header>
+
+          <div className="masala-mobile-scene">
+            <MasalaBoxScene
+              products={products}
+              activeIndex={sequence.activeIndex}
+              focusProgress={sequence.focusProgress}
+              rotation={rotation}
+              interactive
+              onProductSelect={onProductSelect}
+            />
+          </div>
+
+          <article
+            key={activeProduct.id}
+            className="masala-mobile-focus"
+            aria-live="polite"
+            style={{ '--mobile-product-accent': MOBILE_ACCENTS[activeProduct.accent] ?? '#d97706' }}
+          >
+            <div className="masala-mobile-focus-meta">
+              <span>{String(sequence.activeIndex + 1).padStart(2, '0')} / {String(products.length).padStart(2, '0')}</span>
+              <span>{activeProduct.heat}</span>
+            </div>
+            <h3>{activeProduct.name}</h3>
+            <p>{activeProduct.shortDescription}</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function MasalaExperienceSection({ products, onProductChange }) {
   const sectionRef = useRef(null)
   const stageRef = useRef(null)
@@ -108,6 +158,21 @@ export default function MasalaExperienceSection({ products, onProductChange }) {
   const playMasalaChangeSound = useMasalaChangeSound()
   const activeProduct = products[sequence.activeIndex] || products[0]
   const rotation = -(sequence.progress * 400)
+
+  const handleMobileProductSelect = useCallback((index) => {
+    const targetProgress = Math.min(Math.max((index + 0.34) / products.length, 0), 1)
+    setSequence(getMasalaSequenceState(targetProgress, products.length))
+
+    const section = sectionRef.current
+    if (!section) return
+
+    const travel = Math.max(section.offsetHeight - window.innerHeight, 1)
+    const sectionTop = window.scrollY + section.getBoundingClientRect().top
+    window.scrollTo({
+      top: sectionTop + travel * targetProgress,
+      behavior: reducedMotion ? 'auto' : 'smooth',
+    })
+  }, [products.length, reducedMotion])
 
   useEffect(() => {
     if (reducedMotion) return undefined
@@ -273,20 +338,13 @@ export default function MasalaExperienceSection({ products, onProductChange }) {
           </div>
         </div>
       </div>
-      <div className="lg:hidden">
-        <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
-          <p className="masala-kicker">Masala collection</p>
-          <h2 className="mt-3 text-4xl font-semibold text-stone-950">A closer look at every masala.</h2>
-          <ResponsiveMasalaBox
-            products={products}
-            activeIndex={sequence.activeIndex}
-            focusProgress={sequence.focusProgress}
-            rotation={rotation}
-          />
-          <p className="mt-4 max-w-xl text-base leading-7 text-stone-600">The detailed scroll sequence is available on larger screens. Every product detail remains here for touch-friendly browsing.</p>
-          <MobileProductList products={products} onProductChange={onProductChange} />
-        </div>
-      </div>
+      <MobileMasalaStage
+        activeProduct={activeProduct}
+        products={products}
+        sequence={sequence}
+        onProductSelect={handleMobileProductSelect}
+        rotation={rotation}
+      />
     </section>
   )
 }
