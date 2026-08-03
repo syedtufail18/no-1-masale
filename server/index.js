@@ -96,7 +96,7 @@ function escapeHtml(value) {
 
 function getModerationLinks(review) {
   const secret = process.env.ADMIN_REVIEW_TOKEN
-  const baseUrl = process.env.REVIEW_ADMIN_BASE_URL || 'http://127.0.0.1:3001'
+  const baseUrl = process.env.REVIEW_ADMIN_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://127.0.0.1:3001'
   if (!secret) return null
   return {
     approve: createModerationLink(baseUrl, secret, review.id, 'approved'),
@@ -179,7 +179,7 @@ async function notifyAdminOfReview(review) {
   }
 }
 
-app.get('/health', (_req, res) => {
+function healthHandler(_req, res) {
   const missing = getMissingSmtpVars()
   res.json({
     ok: true,
@@ -187,7 +187,9 @@ app.get('/health', (_req, res) => {
     missing,
     reviewStorage: isConfigured() ? 'supabase' : 'not_configured',
   })
-})
+}
+
+app.get(['/health', '/healthz'], healthHandler)
 
 app.get('/reviews', async (_req, res) => {
   try {
@@ -421,5 +423,5 @@ app.post('/send', async (req, res) => {
   }
 })
 
-const port = process.env.PORT || 3001
-app.listen(port, () => console.log(`Mail server listening on http://localhost:${port}`))
+const port = Number(process.env.PORT) || (process.env.RENDER ? 10000 : 3001)
+app.listen(port, '0.0.0.0', () => console.log(`Mail server listening on http://0.0.0.0:${port}`))

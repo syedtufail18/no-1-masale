@@ -9,6 +9,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20
+      - key: PORT
+        value: 10000
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -26,8 +28,6 @@ services:
       - key: ADMIN_REVIEW_TOKEN
         sync: false
       - key: REVIEW_ADMIN_EMAIL
-        sync: false
-      - key: REVIEW_ADMIN_BASE_URL
         sync: false
       - key: SUPABASE_URL
         sync: false
