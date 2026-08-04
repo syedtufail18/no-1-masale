@@ -38,3 +38,7 @@ Create it from the repository with **New + > Blueprint**, provide the prompted
 secret values from your local `.env`, and use the resulting `https://...onrender.com`
 address for both `REVIEW_ADMIN_BASE_URL` in Render and `VITE_API_BASE_URL` in the
 GitHub repository Actions variables. Push or re-run the Pages workflow afterward.
+
+Render's free web services cannot use SMTP ports. For production delivery, add
+`RESEND_API_KEY` and `RESEND_FROM_EMAIL` to the Render service instead. The server
+uses Resend's HTTPS API when these values are present and retains SMTP for local use.

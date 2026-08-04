@@ -29,7 +29,11 @@ const reviewUpload = multer({
   },
 })
 
-function getMissingSmtpVars() {
+function getMissingEmailVars() {
+  if (process.env.RESEND_API_KEY) {
+    return process.env.RESEND_FROM_EMAIL ? [] : ['RESEND_FROM_EMAIL']
+  }
+
   return requiredSmtpVars.filter((name) => !process.env[name])
 }
 
@@ -79,9 +83,34 @@ function createTransporter() {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
-    secure: process.env.SMTP_SECURE === 'true',
+    secure: String(process.env.SMTP_SECURE).toLowerCase() === 'true',
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
   })
+}
+
+async function sendEmail({ from, to, subject, text, replyTo }) {
+  if (!process.env.RESEND_API_KEY) return createTransporter().sendMail({ from, to, subject, text, replyTo })
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM_EMAIL,
+      to: [to],
+      subject,
+      text,
+      reply_to: replyTo || undefined,
+    }),
+  })
+  const body = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(body.message || body.name || `Resend request failed with ${response.status}`)
+  return { messageId: body.id }
 }
 
 function escapeHtml(value) {
@@ -126,9 +155,9 @@ function renderLegacyModerationPage(review) {
 }
 
 async function notifyAdminOfReview(review) {
-  const missing = getMissingSmtpVars()
+  const missing = getMissingEmailVars()
   if (missing.length) {
-    console.warn(`Review saved, but admin notification was skipped. Missing SMTP config: ${missing.join(', ')}`)
+    console.warn(`Review saved, but admin notification was skipped. Missing email provider config: ${missing.join(', ')}`)
     return false
   }
 
@@ -144,9 +173,9 @@ async function notifyAdminOfReview(review) {
     const moderationLinks = getModerationLinks(review)
     const moderationText = moderationLinks
       ? `Approve review:\n${moderationLinks.approve}\nReject review:\n${moderationLinks.reject}`
-      : 'Set REVIEW_ADMIN_BASE_URL to include approve/reject links in future emails.'
+      : 'Set REVIEW_ADMIN_BASE_URL or deploy on Render to include approve/reject links in future emails.'
 
-    await createTransporter().sendMail({
+    await sendEmail({
       from: process.env.FROM_EMAIL || process.env.SMTP_USER,
       to,
       subject: `NEW ACTION LINKS: review ${review.id} awaiting approval`,
@@ -180,7 +209,7 @@ async function notifyAdminOfReview(review) {
 }
 
 function healthHandler(_req, res) {
-  const missing = getMissingSmtpVars()
+  const missing = getMissingEmailVars()
   res.json({
     ok: true,
     emailReady: missing.length === 0,
@@ -396,9 +425,9 @@ app.post('/send', async (req, res) => {
   const { name, email, phone, message, productId, productName, quantity } = req.body || {}
   if (!email || !message) return res.status(400).json({ error: 'Email and message are required' })
 
-  const missing = getMissingSmtpVars()
+  const missing = getMissingEmailVars()
   if (missing.length) {
-    return res.status(500).json({ error: 'smtp_not_configured', message: `Missing SMTP config: ${missing.join(', ')}` })
+    return res.status(500).json({ error: 'email_not_configured', message: `Missing email provider config: ${missing.join(', ')}` })
   }
 
   try {
@@ -408,7 +437,7 @@ app.post('/send', async (req, res) => {
       ? `\nProduct ID: ${productId || 'Not specified'}\nProduct: ${productName || 'Not specified'}\nQuantity: ${quantity || 'Not specified'}`
       : ''
 
-    const info = await createTransporter().sendMail({
+    const info = await sendEmail({
       from,
       to,
       subject: `Enquiry from ${name || 'Website visitor'}`,
