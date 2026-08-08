@@ -92,7 +92,9 @@ function createTransporter() {
 }
 
 async function sendEmail({ from, to, subject, text, replyTo }) {
-  if (!process.env.RESEND_API_KEY) return createTransporter().sendMail({ from, to, subject, text, replyTo })
+  const recipients = [...new Set((Array.isArray(to) ? to : [to]).filter(Boolean))]
+
+  if (!process.env.RESEND_API_KEY) return createTransporter().sendMail({ from, to: recipients, subject, text, replyTo })
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -102,7 +104,7 @@ async function sendEmail({ from, to, subject, text, replyTo }) {
     },
     body: JSON.stringify({
       from: process.env.RESEND_FROM_EMAIL,
-      to: [to],
+      to: recipients,
       subject,
       text,
       reply_to: replyTo || undefined,
@@ -163,7 +165,12 @@ async function notifyAdminOfReview(review) {
     return false
   }
 
-  const to = process.env.REVIEW_ADMIN_EMAIL || process.env.TO_EMAIL || 'syed.uck@gmail.com'
+  const to = [...new Set([
+    process.env.REVIEW_ADMIN_EMAIL,
+    process.env.TO_EMAIL,
+  ].filter(Boolean))]
+
+  if (to.length === 0) to.push('syed.uck@gmail.com')
 
   try {
     let imageUrl = null
