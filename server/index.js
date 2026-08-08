@@ -125,7 +125,9 @@ function escapeHtml(value) {
 
 function getModerationLinks(review) {
   const secret = process.env.ADMIN_REVIEW_TOKEN
-  const baseUrl = process.env.REVIEW_ADMIN_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://127.0.0.1:3001'
+  const configuredBaseUrl = process.env.REVIEW_ADMIN_BASE_URL
+  const hasLocalConfiguredUrl = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/|$)/i.test(configuredBaseUrl || '')
+  const baseUrl = process.env.RENDER_EXTERNAL_URL || (hasLocalConfiguredUrl ? null : configuredBaseUrl) || 'http://127.0.0.1:3001'
   if (!secret) return null
   return {
     approve: createModerationLink(baseUrl, secret, review.id, 'approved'),
